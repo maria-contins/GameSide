@@ -24,6 +24,7 @@ public class MyListener : MonoBehaviour
     public string[] data;
 
     public string[] state = new string[3];
+    public string[] progress = new string[3];
 
     public Dictionary<string, string[][]> modes;
     
@@ -84,13 +85,17 @@ public class MyListener : MonoBehaviour
         data = dataReceived.Split(' ');
 
         state[int.Parse(data[0])] = data[1].Trim();
+
+        Debug.Log("State: " + state[0] + " " + state[1] + " " + state[2]);
+        Debug.Log("Progress: " + progress[0] + " " + progress[1] + " " + progress[2]);
     }
 
     void Update()
     {
-        ChangeColour(card0, state[0]);
-        ChangeColour(card1, state[1]);
-        ChangeColour(card2, state[2]);
+        CheckValidity();
+        ShowProgress(card0, progress[0]);
+        ShowProgress(card1, progress[1]);
+        ShowProgress(card2, progress[2]);
     }
 
     void ChangeColour(GameObject card, string colour)
@@ -109,6 +114,44 @@ public class MyListener : MonoBehaviour
             default:
                 break;
         }
+    }
+
+    void ShowProgress(GameObject card, string colour)
+    {
+        switch (colour)
+        {
+            case "grey":
+                card.GetComponent<Renderer>().material.color = Color.grey;
+                break;
+            case "yellow":
+                card.GetComponent<Renderer>().material.color = Color.yellow;
+                break;
+            case "green":
+                card.GetComponent<Renderer>().material.color = Color.green;
+                break;
+            default:
+                break;
+        }
+    }
+
+    void CheckValidity()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            if (state[i] == currentSolution[i])
+            {
+                progress[i] = "green";
+            }
+            else if (currentSolution[0] == state[i] || currentSolution[1] == state[i] || currentSolution[2] == state[i])
+            {
+                progress[i] = "yellow";
+            }
+            else
+            {
+                progress[i] = "grey";
+            }
+        }
+        
     }
 
     public void LoadMasterMindJson()

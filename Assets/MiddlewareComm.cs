@@ -3,6 +3,11 @@ using System.Net.Sockets;
 using System.Text;
 using UnityEngine;
 using System.Threading;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using System.IO;
+using Random = System.Random;
+
 
 public class MyListener : MonoBehaviour
 {
@@ -20,6 +25,11 @@ public class MyListener : MonoBehaviour
 
     public string[] state = new string[3];
 
+    public Dictionary<string, string[][]> modes;
+    
+    public string[][] currentLevel;
+
+    public string[] currentSolution;
 
     void Start()
     {
@@ -28,6 +38,13 @@ public class MyListener : MonoBehaviour
         thread = new Thread(ts);
         thread.Start(); 
         data = null;
+
+        LoadMasterMindJson();
+
+        currentLevel = modes["3readers"];
+        System.Random rand = new Random();
+        currentSolution = currentLevel[rand.Next(0, currentLevel.Length)];
+        Debug.Log(currentSolution[0] + " " + currentSolution[1] + " " + currentSolution[2]);
 
         state[0] = "none";
         state[1] = "none";
@@ -94,5 +111,19 @@ public class MyListener : MonoBehaviour
         }
     }
 
+    public void LoadMasterMindJson()
+    {
+        using (StreamReader r = new StreamReader("MasterMind_3Readers.json"))
+        {
+            string json = r.ReadToEnd();
+            modes = JsonConvert.DeserializeObject<Dictionary<string, string[][] >>(json);
+        }
+    }
 
-}   
+}
+
+    public class Mode
+    {
+        public string mode { get; set; }
+        public string[] solutions { get; set; }
+    }

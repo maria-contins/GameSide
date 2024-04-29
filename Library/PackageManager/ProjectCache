@@ -5,16 +5,16 @@ m_ProjectFiles:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638457822640000000
-    m_Hash: 996626820
+      ticks: 638500239120000000
+    m_Hash: 2361114090
   m_LockFileStatus:
     m_FilePath: /home/maria/Documents/Tese/GameSide/Packages/packages-lock.json
     m_PathExists: 1
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638457822640000000
-    m_Hash: 2527013195
+      ticks: 638500239260000000
+    m_Hash: 3022188418
 m_EmbeddedPackageManifests:
   m_ManifestsStatus: {}
 m_LocalPackages:
@@ -733,6 +733,7 @@ m_ResolvedPackages:
     - 1.0.0
     - 3.0.0-exp.1
     - 3.0.0-exp.3
+    - 3.0.0-exp.4
     compatible:
     - 1.0.0
     recommended: 1.0.0
@@ -829,11 +830,13 @@ m_ResolvedPackages:
     - 1.9.0
     - 1.9.1
     - 1.9.2
+    - 1.9.4
     compatible:
     - 1.9.0
     - 1.9.1
     - 1.9.2
-    recommended: 1.9.2
+    - 1.9.4
+    recommended: 1.9.4
     deprecated:
     - 1.8.0-pre.1
   dependencies:
@@ -2719,6 +2722,84 @@ m_ResolvedPackages:
     deprecationMessage: 
   isDeprecated: 0
   deprecationMessage: 
+- packageId: com.unity.nuget.newtonsoft-json@2.0.0
+  testable: 0
+  isDirectDependency: 1
+  version: 2.0.0
+  source: 1
+  resolvedPath: /home/maria/Documents/Tese/GameSide/Library/PackageCache/com.unity.nuget.newtonsoft-json@2.0.0
+  assetPath: Packages/com.unity.nuget.newtonsoft-json
+  name: com.unity.nuget.newtonsoft-json
+  displayName: Newtonsoft Json
+  author:
+    name: 
+    email: 
+    url: 
+  category: 
+  type: library
+  description: 'Newtonsoft Json for use in Unity projects and Unity packages. Currently
+    synced to version 12.0.2.
+
+
+    This package is used for advanced json serialization
+    and deserialization. Most Unity users will be better suited using the existing
+    json tools built into Unity.
+
+    To avoid assembly clashes, please use this
+    package if you intend to use Newtonsoft Json.'
+  status: 0
+  errors: []
+  versions:
+    all:
+    - 1.0.0-preview.2
+    - 1.0.0-preview.3
+    - 1.0.0-preview.4
+    - 1.0.1-preview.1
+    - 1.1.2
+    - 2.0.0-preview
+    - 2.0.0-preview.1
+    - 2.0.0-preview.2
+    - 2.0.0
+    - 2.0.1-preview.1
+    - 2.0.2
+    - 3.0.1
+    - 3.0.2
+    - 3.1.0
+    - 3.2.0
+    - 3.2.1
+    compatible:
+    - 3.2.1
+    recommended: 3.2.1
+    deprecated: []
+  dependencies: []
+  resolvedDependencies: []
+  keywords: []
+  registry:
+    id: main
+    name: 
+    url: https://packages.unity.com
+    scopes: []
+    isDefault: 1
+    capabilities: 7
+    configSource: 0
+  hideInEditor: 1
+  isAssetStorePackage: 0
+  datePublishedTicks: 637237898320000000
+  documentationUrl: 
+  hasRepository: 1
+  repository:
+    type: git
+    url: https://github.cds.internal.unity3d.com/unity/com.unity.nuget.newtonsoft-json.git
+    revision: d2fd6ed876261bbd82f59199ad711e7667bf633a
+    path: 
+  unityLifecycle:
+    version: 3.2.1
+    nextVersion: 
+    recommendedVersion: 
+    isDeprecated: 0
+    deprecationMessage: 
+  isDeprecated: 0
+  deprecationMessage: 
 - packageId: com.unity.modules.subsystems@1.0.0
   testable: 0
   isDirectDependency: 0
@@ -3405,6 +3486,7 @@ m_ResolvedPackages:
     - 1.4.1
     - 1.4.2
     - 1.4.3
+    - 1.4.4
     - 2.0.1-exp.1
     - 2.0.1-exp.2
     - 2.0.1-pre.12
@@ -3424,6 +3506,7 @@ m_ResolvedPackages:
     - 1.4.1
     - 1.4.2
     - 1.4.3
+    - 1.4.4
     - 2.0.1-exp.1
     - 2.0.1-exp.2
     - 2.0.1-pre.12

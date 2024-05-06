@@ -17,20 +17,26 @@ public class MyListener : MonoBehaviour
     TcpClient client;
     bool running;
 
+
     public GameObject card0;
     public GameObject card1;
     public GameObject card2;
 
+    public GameObject[] cubes;
+
+
     public string[] data;
-
     public string[] state = new string[3];
-    public string[] progress = new string[3];
 
-    public Dictionary<string, string[][]> modes;
-    
-    public string[][] currentLevel;
 
-    public string[] currentSolution;
+    public Game game;
+    int currentReaders;
+    enum GameMode
+    {
+        MasterMind,
+        Memory
+    }
+
 
     void Start()
     {
@@ -39,17 +45,19 @@ public class MyListener : MonoBehaviour
         thread = new Thread(ts);
         thread.Start(); 
         data = null;
+        currentReaders = 3;
+        cubes = new GameObject[] { card0, card1, card2 };
 
-        LoadMasterMindJson();
+        setInialState(currentReaders);
+        game = new MasterMind(currentReaders);
+    }
 
-        currentLevel = modes["3readers"];
-        System.Random rand = new Random();
-        currentSolution = currentLevel[rand.Next(0, currentLevel.Length)];
-        Debug.Log(currentSolution[0] + " " + currentSolution[1] + " " + currentSolution[2]);
-
-        state[0] = "none";
-        state[1] = "none";
-        state[2] = "none";
+    void setInialState(int currentReaders)
+    {
+        for (int i = 0; i < currentReaders; i++)
+        {
+            state[i] = "none";
+        }
     }
 
     void GetData()
@@ -81,21 +89,16 @@ public class MyListener : MonoBehaviour
             Debug.Log("Data received: " + dataReceived);
         }
 
-        //StringSplitOptions.RemoveEmptyEntries
         data = dataReceived.Split(' ');
-
         state[int.Parse(data[0])] = data[1].Trim();
 
         Debug.Log("State: " + state[0] + " " + state[1] + " " + state[2]);
-        Debug.Log("Progress: " + progress[0] + " " + progress[1] + " " + progress[2]);
     }
 
     void Update()
     {
-        CheckValidity();
-        ShowProgress(card0, progress[0]);
-        ShowProgress(card1, progress[1]);
-        ShowProgress(card2, progress[2]);
+        game.CheckValidity(cubes, state);
+        game.FeedBack(cubes, state);
     }
 
     void ChangeColour(GameObject card, string colour)
@@ -116,57 +119,200 @@ public class MyListener : MonoBehaviour
         }
     }
 
-    void ShowProgress(GameObject card, string colour)
+}
+    public abstract class Game
     {
-        switch (colour)
-        {
-            case "grey":
-                card.GetComponent<Renderer>().material.color = Color.grey;
-                break;
-            case "yellow":
-                card.GetComponent<Renderer>().material.color = Color.yellow;
-                break;
-            case "green":
-                card.GetComponent<Renderer>().material.color = Color.green;
-                break;
-            default:
-                break;
-        }
+        public abstract void CheckValidity(GameObject[] cubes, string[] state);
+        public abstract void FeedBack(GameObject[] cubes, string[] state);
     }
 
-    void CheckValidity()
+    public class MasterMind : Game
     {
-        for (int i = 0; i < 3; i++)
+        private string[][] currentConfig;
+        private string[] currentSolution;
+        private Dictionary<string, string[][]> modes;
+        private string[] progress;
+        private int currentReaders;
+
+        public MasterMind(int currentReaders)
         {
-            if (state[i] == currentSolution[i])
+            LoadMasterMindJson();
+            Debug.Log("CURRENT GAME MODE: MASTERMIND");
+
+            this.currentReaders = currentReaders;
+            currentConfig = modes["3readers"];
+            progress = new string[currentReaders];
+
+            System.Random rand = new Random();
+            currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
+            
+            Debug.Log("CURRENT SOLUTION: " + currentSolution[0] + " " + currentSolution[1] + " " + currentSolution[2]);
+        }
+
+        public void LoadMasterMindJson()
+        {
+            using (StreamReader r = new StreamReader("MasterMind_3Readers.json"))
             {
-                progress[i] = "green";
-            }
-            else if (currentSolution[0] == state[i] || currentSolution[1] == state[i] || currentSolution[2] == state[i])
-            {
-                progress[i] = "yellow";
-            }
-            else
-            {
-                progress[i] = "grey";
+                string json = r.ReadToEnd();
+                modes = JsonConvert.DeserializeObject<Dictionary<string, string[][] >>(json);
             }
         }
         
-    }
-
-    public void LoadMasterMindJson()
-    {
-        using (StreamReader r = new StreamReader("MasterMind_3Readers.json"))
+        public override void CheckValidity(GameObject[] cubes, string[] state)
         {
-            string json = r.ReadToEnd();
-            modes = JsonConvert.DeserializeObject<Dictionary<string, string[][] >>(json);
+            for (int i = 0; i < currentReaders; i++)
+            {
+                if (state[i] == currentSolution[i])
+                {
+                    progress[i] = "green";
+                }
+                else if (System.Array.IndexOf(currentSolution, state[i]) != -1)
+                {
+                    progress[i] = "yellow";
+                }
+                else
+                {
+                    progress[i] = "grey";
+                }
+            }
+            
         }
+
+        public void ShowProgress(GameObject card, string colour)
+        {
+            switch (colour)
+            {
+                case "grey":
+                    card.GetComponent<Renderer>().material.color = Color.grey;
+                    break;
+                case "yellow":
+                    card.GetComponent<Renderer>().material.color = Color.yellow;
+                    break;
+                case "green":
+                    card.GetComponent<Renderer>().material.color = Color.green;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public override void FeedBack(GameObject[] cubes, string[] state) {
+
+            ShowProgress(cubes[0], progress[0]);
+            ShowProgress(cubes[1], progress[1]);
+            ShowProgress(cubes[2], progress[2]);
+
+            if (progress == currentSolution)
+            {
+                Debug.Log("YOU WON!");
+                StartNewGame();
+            }
+        }
+
+        public void StartNewGame()
+        {
+            System.Random rand = new Random();
+            currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
+            Debug.Log("NEW SOLUTION: " + currentSolution[0] + " " + currentSolution[1] + " " + currentSolution[2]);
+        }
+
     }
 
-}
-
-    public class Mode
+    public class Memory : Game
     {
-        public string mode { get; set; }
-        public string[] solutions { get; set; }
-    }
+        private string[][] currentConfig;
+        private string[] currentSolution;
+        private Dictionary<string, string[][]> modes;
+        private int currentReaders;
+
+        public Memory(int currentReaders)
+        {
+            LoadMemoryJson();
+            Debug.Log("CURRENT GAME MODE: MEMORY");
+
+            this.currentReaders = currentReaders;
+            currentConfig = modes["3readers"];
+
+            System.Random rand = new Random();
+            currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
+
+        }
+
+        public void LoadMemoryJson()
+        {
+            using (StreamReader r = new StreamReader("Memory.json"))
+            {
+                string json = r.ReadToEnd();
+                modes = JsonConvert.DeserializeObject<Dictionary<string, string[][] >>(json);
+            }
+        }
+        
+        public override void CheckValidity(GameObject[] cubes, string[] state)
+        {
+            if (state == currentSolution)
+            {
+                Debug.Log("YOU WON!");
+                StartNewGame(cubes);
+            } 
+            else
+            {
+                Debug.Log("TRY AGAIN!");
+            }
+            
+        }
+
+        public void ShowOrder(GameObject[] cubes) // TODO: IF ASKED SHOW ORDER AGAIN
+        {
+            for (int i = 0; i < currentReaders; i++)
+            {
+                ChangeColour(cubes[i], currentSolution[i]);
+            }
+
+            Debug.Log("MEMORIZE!");
+            Thread.Sleep(5000); //TODO Make it so that comms while sleep dont get read
+
+            for (int i = 0; i < currentReaders; i++)
+            {
+                ChangeColour(cubes[i], "grey");
+            }
+        }
+
+        private void ChangeColour(GameObject card, string colour)
+        {
+            switch (colour)
+            {
+                case "red":
+                    card.GetComponent<Renderer>().material.color = Color.red;
+                    break;
+                case "blue":
+                    card.GetComponent<Renderer>().material.color = Color.blue;
+                    break;
+                case "green":
+                    card.GetComponent<Renderer>().material.color = Color.green;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public override void FeedBack(GameObject[] cubes, string[] state) {
+
+            if (state == currentSolution)
+            {
+                Debug.Log("YOU WON!");
+                StartNewGame(cubes);
+            }
+            else
+            {
+                Debug.Log("TRY AGAIN!");
+            }
+        }
+
+        public void StartNewGame(GameObject[] cubes)
+        {
+            System.Random rand = new Random();
+            currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
+            ShowOrder(cubes);
+        }
+}
+        

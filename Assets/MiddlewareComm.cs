@@ -95,27 +95,35 @@ public class MyListener : MonoBehaviour
         Debug.Log("State: " + state[0] + " " + state[1] + " " + state[2]);
     }
 
+    // 1 -> MasterMind
+    // 2 -> Memory 
     void Update()
     {
-        game.CheckValidity(cubes, state);
-        game.FeedBack(cubes, state);
-    }
-
-    void ChangeColour(GameObject card, string colour)
-    {
-        switch (colour)
+        if (Input.GetKeyUp(KeyCode.Alpha1))
         {
-            case "red":
-                card.GetComponent<Renderer>().material.color = Color.red;
-                break;
-            case "blue":
-                card.GetComponent<Renderer>().material.color = Color.blue;
-                break;
-            case "green":
-                card.GetComponent<Renderer>().material.color = Color.green;
-                break;
-            default:
-                break;
+            Debug.Log("Now playing MasterMind");
+            game = new MasterMind(currentReaders);
+        }
+        else if (Input.GetKeyUp(KeyCode.Alpha2))
+        {
+            Debug.Log("Now playing Memory game");
+            game = new Memory(currentReaders, cubes);
+    
+        }
+
+        if (state != null && state[0] != "none")
+        {
+            switch (game)
+            {
+                case MasterMind _:
+                    game.CheckValidity(cubes, state);
+                    game.FeedBack(cubes, state);
+                    break;
+                case Memory _:
+                    game.FeedBack(cubes, state);
+                    break;
+                default:
+                    break;
         }
     }
 
@@ -124,6 +132,7 @@ public class MyListener : MonoBehaviour
     {
         public abstract void CheckValidity(GameObject[] cubes, string[] state);
         public abstract void FeedBack(GameObject[] cubes, string[] state);
+        public abstract void StartNewGame(GameObject[] cubes);
     }
 
     public class MasterMind : Game
@@ -137,7 +146,6 @@ public class MyListener : MonoBehaviour
         public MasterMind(int currentReaders)
         {
             LoadMasterMindJson();
-            Debug.Log("CURRENT GAME MODE: MASTERMIND");
 
             this.currentReaders = currentReaders;
             currentConfig = modes["3readers"];
@@ -205,11 +213,11 @@ public class MyListener : MonoBehaviour
             if (progress == currentSolution)
             {
                 Debug.Log("YOU WON!");
-                StartNewGame();
+                StartNewGame(cubes);
             }
         }
 
-        public void StartNewGame()
+        public override void StartNewGame(GameObject[] cubes)
         {
             System.Random rand = new Random();
             currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
@@ -224,18 +232,16 @@ public class MyListener : MonoBehaviour
         private string[] currentSolution;
         private Dictionary<string, string[][]> modes;
         private int currentReaders;
+        private string[] lastState;
 
-        public Memory(int currentReaders)
+        public Memory(int currentReaders, GameObject[] cubes)
         {
             LoadMemoryJson();
-            Debug.Log("CURRENT GAME MODE: MEMORY");
 
             this.currentReaders = currentReaders;
             currentConfig = modes["3readers"];
 
-            System.Random rand = new Random();
-            currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
-
+            StartNewGame(cubes);
         }
 
         public void LoadMemoryJson()
@@ -245,32 +251,29 @@ public class MyListener : MonoBehaviour
                 string json = r.ReadToEnd();
                 modes = JsonConvert.DeserializeObject<Dictionary<string, string[][] >>(json);
             }
-        }
-        
+        }     
         public override void CheckValidity(GameObject[] cubes, string[] state)
         {
-            if (state == currentSolution)
-            {
-                Debug.Log("YOU WON!");
-                StartNewGame(cubes);
-            } 
-            else
-            {
-                Debug.Log("TRY AGAIN!");
-            }
             
         }
 
         public void ShowOrder(GameObject[] cubes) // TODO: IF ASKED SHOW ORDER AGAIN
-        {
+        { 
+            Debug.Log("Showing order");
             for (int i = 0; i < currentReaders; i++)
             {
+                Debug.Log(currentSolution[i]);
                 ChangeColour(cubes[i], currentSolution[i]);
             }
+            
+            // wait
 
-            Debug.Log("MEMORIZE!");
-            Thread.Sleep(5000); //TODO Make it so that comms while sleep dont get read
+            HideOrder(cubes);
+            Debug.Log("NOW GUESS");
+        }
 
+        private void HideOrder(GameObject[] cubes)
+        {
             for (int i = 0; i < currentReaders; i++)
             {
                 ChangeColour(cubes[i], "grey");
@@ -279,6 +282,7 @@ public class MyListener : MonoBehaviour
 
         private void ChangeColour(GameObject card, string colour)
         {
+            Debug.Log("Changing colour to: " + colour);
             switch (colour)
             {
                 case "red":
@@ -290,6 +294,9 @@ public class MyListener : MonoBehaviour
                 case "green":
                     card.GetComponent<Renderer>().material.color = Color.green;
                     break;
+                case "grey":
+                    card.GetComponent<Renderer>().material.color = Color.grey;
+                    break;
                 default:
                     break;
             }
@@ -297,22 +304,29 @@ public class MyListener : MonoBehaviour
 
         public override void FeedBack(GameObject[] cubes, string[] state) {
 
+            for (int i = 0; i < currentReaders; i++)
+            {
+                ChangeColour(cubes[i], state[i]);
+            }
+
             if (state == currentSolution)
             {
                 Debug.Log("YOU WON!");
                 StartNewGame(cubes);
             }
-            else
+            else if (state != lastState)
             {
                 Debug.Log("TRY AGAIN!");
+                lastState = state;
             }
         }
 
-        public void StartNewGame(GameObject[] cubes)
+        public override void StartNewGame(GameObject[] cubes)
         {
             System.Random rand = new Random();
             currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
             ShowOrder(cubes);
         }
+    }
 }
         

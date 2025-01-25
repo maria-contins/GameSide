@@ -11,26 +11,33 @@ using Random = System.Random;
 
 public class MyListener : MonoBehaviour
 {
+    // MIDDLWARE COMMUNICATION
     Thread thread;
     public int connectionPort = 25001;
     TcpListener server;
     TcpClient client;
     bool running;
 
-
+    // NOTE: USELESS STUPID BC NOT 3 ANYMORE
+    // NEED SOME SORT OF DYNAMIC READER COUNT WHEN CONFIG STEP IS IMPLEMENTED
     public GameObject card0;
     public GameObject card1;
     public GameObject card2;
-
     public GameObject[] cubes;
 
-
+    // TUI CONFIG
+    public int nr_modules; //needs to be dynamic
+    public int[] nr_readers_per_module; //needs to be dynamic in size and values, position is important 
+    public int nr_slots;
+    public int[] reader_order; //dynamic, related to nr_readers_per_module positions
+    
+    // STATE
     public string[] data;
     public string[] state = new string[3];
-
-
+    public Dictionary<string, string[][]> deck;
     public Game game;
-    int currentReaders;
+    
+    // GAME MODES Scores etc...
     enum GameMode
     {
         MasterMind,
@@ -40,21 +47,43 @@ public class MyListener : MonoBehaviour
 
     void Start()
     {
+        startCommMiddleware();
+
+        // TUI CONFIG MUST BE DYNAMIC 
+        nr_modules = 2;
+        nr_readers_per_module = new int[] {2, 1};
+        nr_slots = calculateNrSlots(nr_modules, nr_readers_per_module);
+        reader_order = new int[] {0, 1};
+        
+        data = null;
+        
+        //cubes = new GameObject[] { card0, card1, card2 };
+
+        setInialState(nr_slots);
+        game = new MasterMind(nr_slots);
+    }
+
+    int calculateNrSlots(int nr_modules, int[] nr_readers_per_module)
+    {
+        int nr_slots = 0;
+        for (int i = 0; i < nr_modules; i++)
+        {
+            nr_slots += nr_readers_per_module[i];
+        }
+        return nr_slots;
+    }
+
+    void startCommMiddleware()
+    {
         Debug.Log("Starting server");
         ThreadStart ts = new ThreadStart(GetData);
         thread = new Thread(ts);
         thread.Start(); 
-        data = null;
-        currentReaders = 3;
-        cubes = new GameObject[] { card0, card1, card2 };
-
-        setInialState(currentReaders);
-        game = new MasterMind(currentReaders);
     }
 
-    void setInialState(int currentReaders)
+    void setInialState(int nr_slots)
     {
-        for (int i = 0; i < currentReaders; i++)
+        for (int i = 0; i < nr_slots; i++)
         {
             state[i] = "none";
         }
@@ -64,9 +93,7 @@ public class MyListener : MonoBehaviour
     {
         server = new TcpListener(IPAddress.Any, connectionPort);
         server.Start();
-
         client = server.AcceptTcpClient();
-
         running = true;
         while (running)
         {
@@ -81,18 +108,24 @@ public class MyListener : MonoBehaviour
         byte[] buffer = new byte[client.ReceiveBufferSize];
         int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
 
-        string dataReceived = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+        string dataReceived = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
         
-        if (dataReceived != null && dataReceived != "")
+        string[] data = dataReceived.Split(',');
+        Debug.Log("Data received: " + data);
+
+        Debug.Log("Data size: " + data.Length);
+        
+        if (dataReceived != null)
         {
             nwStream.Write(buffer, 0, bytesRead);
-            Debug.Log("Data received: " + dataReceived);
+            //Debug.Log("Data received: " + dataReceived);
         }
 
-        data = dataReceived.Split(' ');
-        state[int.Parse(data[0])] = data[1].Trim();
-
-        Debug.Log("State: " + state[0] + " " + state[1] + " " + state[2]);
+        // Debug.Log("Data ihihih: " + data[0]);
+        // data = dataReceived.Split(' ');
+        // state[int.Parse(data[0])] = data[1].Trim();
+        //state = data;
+        //Debug.Log("State: " + state[0] + " " + state[1] + " " + state[2]);
     }
 
     // 1 -> MasterMind
@@ -102,12 +135,12 @@ public class MyListener : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.Alpha1))
         {
             Debug.Log("Now playing MasterMind");
-            game = new MasterMind(currentReaders);
+            //game = new MasterMind(nr_slots);
         }
         else if (Input.GetKeyUp(KeyCode.Alpha2))
         {
             Debug.Log("Now playing Memory game");
-            game = new Memory(currentReaders, cubes);
+            //game = new Memory(nr_slots, cubes);
     
         }
 
@@ -116,11 +149,11 @@ public class MyListener : MonoBehaviour
             switch (game)
             {
                 case MasterMind _:
-                    game.CheckValidity(cubes, state);
-                    game.FeedBack(cubes, state);
+                    //game.CheckValidity(cubes, state);
+                    //game.FeedBack(cubes, state);
                     break;
                 case Memory _:
-                    game.FeedBack(cubes, state);
+                    //game.FeedBack(cubes, state);
                     break;
                 default:
                     break;
@@ -141,15 +174,15 @@ public class MyListener : MonoBehaviour
         private string[] currentSolution;
         private Dictionary<string, string[][]> modes;
         private string[] progress;
-        private int currentReaders;
+        private int nr_slots;
 
-        public MasterMind(int currentReaders)
+        public MasterMind(int nr_slots)
         {
             LoadMasterMindJson();
 
-            this.currentReaders = currentReaders;
+            this.nr_slots = nr_slots;
             currentConfig = modes["3readers"];
-            progress = new string[currentReaders];
+            progress = new string[nr_slots];
 
             System.Random rand = new Random();
             currentSolution = currentConfig[rand.Next(0, currentConfig.Length)];
@@ -168,7 +201,7 @@ public class MyListener : MonoBehaviour
         
         public override void CheckValidity(GameObject[] cubes, string[] state)
         {
-            for (int i = 0; i < currentReaders; i++)
+            for (int i = 0; i < nr_slots; i++)
             {
                 if (state[i] == currentSolution[i])
                 {
@@ -231,14 +264,14 @@ public class MyListener : MonoBehaviour
         private string[][] currentConfig;
         private string[] currentSolution;
         private Dictionary<string, string[][]> modes;
-        private int currentReaders;
+        private int nr_slots;
         private string[] lastState;
 
-        public Memory(int currentReaders, GameObject[] cubes)
+        public Memory(int nr_slots, GameObject[] cubes)
         {
             LoadMemoryJson();
 
-            this.currentReaders = currentReaders;
+            this.nr_slots = nr_slots;
             currentConfig = modes["3readers"];
 
             StartNewGame(cubes);
@@ -260,7 +293,7 @@ public class MyListener : MonoBehaviour
         public void ShowOrder(GameObject[] cubes) // TODO: IF ASKED SHOW ORDER AGAIN
         { 
             Debug.Log("Showing order");
-            for (int i = 0; i < currentReaders; i++)
+            for (int i = 0; i < nr_slots; i++)
             {
                 Debug.Log(currentSolution[i]);
                 ChangeColour(cubes[i], currentSolution[i]);
@@ -274,7 +307,7 @@ public class MyListener : MonoBehaviour
 
         private void HideOrder(GameObject[] cubes)
         {
-            for (int i = 0; i < currentReaders; i++)
+            for (int i = 0; i < nr_slots; i++)
             {
                 ChangeColour(cubes[i], "grey");
             }
@@ -304,7 +337,7 @@ public class MyListener : MonoBehaviour
 
         public override void FeedBack(GameObject[] cubes, string[] state) {
 
-            for (int i = 0; i < currentReaders; i++)
+            for (int i = 0; i < nr_slots; i++)
             {
                 ChangeColour(cubes[i], state[i]);
             }

@@ -1,0 +1,8 @@
+
+   {
+     "3readers": [
+        ["red", "green", "blue"],
+        ["green", "blue", "red"],
+        ["blue", "red", "green"]
+   ]
+   } 

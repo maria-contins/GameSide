@@ -1,5 +1,5 @@
 {
- "[23, 61, 158, 181]" : {"colour": "green"},
- "[119, 218, 104, 180]" : {"colour": "blue"},
- "[87, 223, 123, 181]" : {"colour": "red"}
+ "red" : {"colour": "red"},
+ "blue" : {"colour": "blue"},
+ "green" : {"colour": "green"}
 }
